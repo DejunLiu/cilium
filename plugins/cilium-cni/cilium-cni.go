@@ -22,6 +22,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/cilium/cilium/api/v1/models"
@@ -379,14 +380,28 @@ func cmdAdd(args *skel.CmdArgs) error {
 
 	//XXX/START
 
-	// TODO(brb) get-ipvlan-master-ifindex
-
-	// Just for testing, we add a 2nd device in parallel, make it an
-	// interface in future to select one.
-	index, err := connector.SetupIpvlanMaster()
+	daemonConfig, err := c.ConfigGet()
 	if err != nil {
 		return err
 	}
+
+	if daemonConfig.Status.DatapathMode.Name == "veth" {
+		panic("TODO(brb): let's assume ipvlan-only for now")
+	}
+
+	index, err := strconv.Atoi(
+		daemonConfig.Status.DatapathMode.Attrs["masterDeviceIfIndex"])
+	if err != nil {
+		return err
+	}
+
+	// TODO(brb): SetupIpvlanMaster is a dead code!
+	//// Just for testing, we add a 2nd device in parallel, make it an
+	//// interface in future to select one.
+	//index, err := connector.SetupIpvlanMaster()
+	//if err != nil {
+	//	return err
+	//}
 
 	ipvlan, link, tmpIfName, err := connector.SetupIpvlan(ep.ContainerID, int(conf.DeviceMTU), index, ep)
 	if err != nil {
