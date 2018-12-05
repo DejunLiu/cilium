@@ -379,6 +379,8 @@ func cmdAdd(args *skel.CmdArgs) error {
 
 	//XXX/START
 
+	// TODO(brb) get-ipvlan-master-ifindex
+
 	// Just for testing, we add a 2nd device in parallel, make it an
 	// interface in future to select one.
 	index, err := connector.SetupIpvlanMaster()

@@ -6,10 +6,13 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"encoding/json"
+
 	strfmt "github.com/go-openapi/strfmt"
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/swag"
+	"github.com/go-openapi/validate"
 )
 
 // DaemonConfigurationStatus Response to a daemon configuration request. Contains the addressing
@@ -22,6 +25,9 @@ type DaemonConfigurationStatus struct {
 
 	// addressing
 	Addressing *NodeAddressing `json:"addressing,omitempty"`
+
+	// datapath mode
+	DatapathMode *DaemonConfigurationStatusDatapathMode `json:"datapathMode,omitempty"`
 
 	// MTU on workload facing devices
 	DeviceMTU int64 `json:"deviceMTU,omitempty"`
@@ -50,6 +56,8 @@ type DaemonConfigurationStatus struct {
 
 /* polymorph DaemonConfigurationStatus addressing false */
 
+/* polymorph DaemonConfigurationStatus datapathMode false */
+
 /* polymorph DaemonConfigurationStatus deviceMTU false */
 
 /* polymorph DaemonConfigurationStatus immutable false */
@@ -71,6 +79,11 @@ func (m *DaemonConfigurationStatus) Validate(formats strfmt.Registry) error {
 	var res []error
 
 	if err := m.validateAddressing(formats); err != nil {
+		// prop
+		res = append(res, err)
+	}
+
+	if err := m.validateDatapathMode(formats); err != nil {
 		// prop
 		res = append(res, err)
 	}
@@ -107,6 +120,25 @@ func (m *DaemonConfigurationStatus) validateAddressing(formats strfmt.Registry) 
 		if err := m.Addressing.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("addressing")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (m *DaemonConfigurationStatus) validateDatapathMode(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.DatapathMode) { // not required
+		return nil
+	}
+
+	if m.DatapathMode != nil {
+
+		if err := m.DatapathMode.Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("datapathMode")
 			}
 			return err
 		}
@@ -183,6 +215,96 @@ func (m *DaemonConfigurationStatus) MarshalBinary() ([]byte, error) {
 // UnmarshalBinary interface implementation
 func (m *DaemonConfigurationStatus) UnmarshalBinary(b []byte) error {
 	var res DaemonConfigurationStatus
+	if err := swag.ReadJSON(b, &res); err != nil {
+		return err
+	}
+	*m = res
+	return nil
+}
+
+// DaemonConfigurationStatusDatapathMode Datapath mode
+// swagger:model DaemonConfigurationStatusDatapathMode
+
+type DaemonConfigurationStatusDatapathMode struct {
+
+	// Attributes
+	Attrs map[string]string `json:"attrs,omitempty"`
+
+	// Name
+	Name string `json:"name,omitempty"`
+}
+
+/* polymorph DaemonConfigurationStatusDatapathMode attrs false */
+
+/* polymorph DaemonConfigurationStatusDatapathMode name false */
+
+// Validate validates this daemon configuration status datapath mode
+func (m *DaemonConfigurationStatusDatapathMode) Validate(formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.validateName(formats); err != nil {
+		// prop
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
+	return nil
+}
+
+var daemonConfigurationStatusDatapathModeTypeNamePropEnum []interface{}
+
+func init() {
+	var res []string
+	if err := json.Unmarshal([]byte(`["veth","ipvlan"]`), &res); err != nil {
+		panic(err)
+	}
+	for _, v := range res {
+		daemonConfigurationStatusDatapathModeTypeNamePropEnum = append(daemonConfigurationStatusDatapathModeTypeNamePropEnum, v)
+	}
+}
+
+const (
+	// DaemonConfigurationStatusDatapathModeNameVeth captures enum value "veth"
+	DaemonConfigurationStatusDatapathModeNameVeth string = "veth"
+	// DaemonConfigurationStatusDatapathModeNameIpvlan captures enum value "ipvlan"
+	DaemonConfigurationStatusDatapathModeNameIpvlan string = "ipvlan"
+)
+
+// prop value enum
+func (m *DaemonConfigurationStatusDatapathMode) validateNameEnum(path, location string, value string) error {
+	if err := validate.Enum(path, location, value, daemonConfigurationStatusDatapathModeTypeNamePropEnum); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (m *DaemonConfigurationStatusDatapathMode) validateName(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.Name) { // not required
+		return nil
+	}
+
+	// value enum
+	if err := m.validateNameEnum("datapathMode"+"."+"name", "body", m.Name); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// MarshalBinary interface implementation
+func (m *DaemonConfigurationStatusDatapathMode) MarshalBinary() ([]byte, error) {
+	if m == nil {
+		return nil, nil
+	}
+	return swag.WriteJSON(m)
+}
+
+// UnmarshalBinary interface implementation
+func (m *DaemonConfigurationStatusDatapathMode) UnmarshalBinary(b []byte) error {
+	var res DaemonConfigurationStatusDatapathMode
 	if err := swag.ReadJSON(b, &res); err != nil {
 		return err
 	}
