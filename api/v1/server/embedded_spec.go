@@ -1294,8 +1294,11 @@ func init() {
             "attrs": {
               "description": "Attributes",
               "type": "object",
-              "additionalProperties": {
-                "type": "string"
+              "properties": {
+                "masterDevIfIndex": {
+                  "description": "Master device ifindex (only for ipvlan)",
+                  "type": "integer"
+                }
               }
             },
             "name": {

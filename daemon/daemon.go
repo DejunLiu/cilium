@@ -23,7 +23,6 @@ import (
 	"path/filepath"
 	"reflect"
 	"runtime"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -1195,9 +1194,9 @@ func (h *getConfig) Handle(params GetConfigParams) middleware.Responder {
 		PolicyEnforcement: policy.GetPolicyEnabled(),
 	}
 
-	datapathModeAttrs := make(map[string]string)
+	datapathModeAttrs := &models.DaemonConfigurationStatusDatapathModeAttrs{}
 	if option.Config.DatapathMode == "ipvlan" {
-		datapathModeAttrs["masterDeviceIfIndex"] = strconv.Itoa(option.Config.IPVlanMasterDevIfIndex)
+		datapathModeAttrs.MasterDevIfIndex = int64(option.Config.IPVlanMasterDevIfIndex)
 	}
 
 	status := &models.DaemonConfigurationStatus{
