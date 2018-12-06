@@ -269,6 +269,11 @@ func setupIpvlanWithNames(lxcIfName string, mtu int, masterDev int, ep *models.E
 		return nil, nil, fmt.Errorf("unable to create ipvlan slave device: %s", err)
 	}
 
+	master, err := netlink.LinkByIndex(masterDev)
+	if err != nil {
+		return nil, nil, fmt.Errorf("unable to find master device: %s", err)
+	}
+
 	defer func() {
 		if err != nil {
 			if err = netlink.LinkDel(ipvlan); err != nil {
@@ -293,6 +298,12 @@ func setupIpvlanWithNames(lxcIfName string, mtu int, masterDev int, ep *models.E
 	if err = netlink.LinkSetMTU(link, mtu); err != nil {
 		return nil, nil, fmt.Errorf("unable to set MTU to %q: %s", lxcIfName, err)
 	}
+
+	ep.Mac = link.Attrs().HardwareAddr.String()
+	ep.HostMac = master.Attrs().HardwareAddr.String()
+	// TODO(brb) check whether the following fields are used only for reporting
+	ep.InterfaceIndex = int64(link.Attrs().Index)
+	ep.InterfaceName = link.Attrs().Name
 
 	return ipvlan, &link, nil
 }
