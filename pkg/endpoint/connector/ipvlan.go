@@ -18,9 +18,8 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
-	"net"
-	"time"
 	"path/filepath"
+	"time"
 	"unsafe"
 
 	"github.com/cilium/cilium/api/v1/models"
@@ -63,13 +62,13 @@ func loadEntryProg(mapFd int) (int, error) {
 	license := []byte{'A', 'S', 'L', '2', '\x00'}
 	bpfAttr := BPFAttrProg{
 		ProgType: 3,
-		InsnCnt:  uint32(len(insns)/8),
+		InsnCnt:  uint32(len(insns) / 8),
 		Insns:    uintptr(unsafe.Pointer(&insns[0])),
 		License:  uintptr(unsafe.Pointer(&license[0])),
 	}
-	fd, _, errno := unix.Syscall(unix.SYS_BPF, 5 /* BPF_PROG_LOAD */,
-				     uintptr(unsafe.Pointer(&bpfAttr)),
-				     unsafe.Sizeof(bpfAttr))
+	fd, _, errno := unix.Syscall(unix.SYS_BPF, 5, /* BPF_PROG_LOAD */
+		uintptr(unsafe.Pointer(&bpfAttr)),
+		unsafe.Sizeof(bpfAttr))
 	if errno != 0 {
 		return 0, errno
 	}
@@ -107,9 +106,9 @@ func createTailCallMap() (int, int, error) {
 		MaxEntries: 1,
 		Flags:      0,
 	}
-	fd, _, errno := unix.Syscall(unix.SYS_BPF, 0 /* BPF_MAP_CREATE */,
-				     uintptr(unsafe.Pointer(&bpfAttr)),
-				     unsafe.Sizeof(bpfAttr))
+	fd, _, errno := unix.Syscall(unix.SYS_BPF, 0, /* BPF_MAP_CREATE */
+		uintptr(unsafe.Pointer(&bpfAttr)),
+		unsafe.Sizeof(bpfAttr))
 	if int(fd) < 0 || errno != 0 {
 		return 0, 0, errno
 	}
@@ -125,9 +124,9 @@ func createTailCallMap() (int, int, error) {
 	}{
 		info: bpfAttrInfo,
 	}
-	ret, _, errno := unix.Syscall(unix.SYS_BPF, 15 /* BPF_OBJ_GET_INFO_BY_FD */,
-				      uintptr(unsafe.Pointer(&bpfAttr2)),
-				      unsafe.Sizeof(bpfAttr2))
+	ret, _, errno := unix.Syscall(unix.SYS_BPF, 15, /* BPF_OBJ_GET_INFO_BY_FD */
+		uintptr(unsafe.Pointer(&bpfAttr2)),
+		unsafe.Sizeof(bpfAttr2))
 	if ret != 0 || errno != 0 {
 		unix.Close(int(fd))
 		return 0, 0, errno
@@ -155,11 +154,6 @@ func SetupIpvlanRemoteNs(netNs ns.NetNS, srcIfName, dstIfName string) (int, int,
 	rand.Seed(time.Now().UTC().UnixNano())
 
 	err = netNs.Do(func(_ ns.NetNS) error {
-		// FIXME: Ugly hack for testing till we get IPAM to switch over, needed to UP the dev
-		var address = &net.IPNet{IP: net.IPv4(10, 8, 1, 1 + byte(rand.Intn(128))), Mask: net.CIDRMask(24, 32)}
-		var addr = &netlink.Addr{IPNet: address}
-		var err error
-
 		err = link.Rename(srcIfName, dstIfName)
 		if err != nil {
 			return fmt.Errorf("failed to rename ipvlan from %q to %q: %s", srcIfName, dstIfName, err)
@@ -168,14 +162,6 @@ func SetupIpvlanRemoteNs(netNs ns.NetNS, srcIfName, dstIfName string) (int, int,
 		ipvlan, err := netlink.LinkByName(dstIfName)
 		if err != nil {
 			return fmt.Errorf("failed to lookup ipvlan device %q: %s", dstIfName, err)
-		}
-
-		if err = netlink.AddrAdd(ipvlan, addr); err != nil {
-			return fmt.Errorf("failed to set ipvlan device %q IP addr: %s", dstIfName, err)
-		}
-
-		if err = netlink.LinkSetUp(ipvlan); err != nil {
-			return fmt.Errorf("unable to bring up ipvlan device %q: %s", dstIfName, err)
 		}
 
 		qdiscAttrs := netlink.QdiscAttrs{

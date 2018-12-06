@@ -356,25 +356,28 @@ func cmdAdd(args *skel.CmdArgs) error {
 		K8sNamespace: string(cniArgs.K8S_POD_NAMESPACE),
 	}
 
-	veth, peer, tmpIfName, err := connector.SetupVeth(ep.ContainerID, int(conf.DeviceMTU), ep)
-	if err != nil {
-		return err
-	}
-	defer func() {
+	// TODO(brb): move to a helper function
+	if false {
+		veth, peer, tmpIfName, err := connector.SetupVeth(ep.ContainerID, int(conf.DeviceMTU), ep)
 		if err != nil {
-			if err = netlink.LinkDel(veth); err != nil {
-				logger.WithError(err).WithField(logfields.Veth, veth.Name).Warn("failed to clean up and delete veth")
-			}
+			return err
 		}
-	}()
+		defer func() {
+			if err != nil {
+				if err = netlink.LinkDel(veth); err != nil {
+					logger.WithError(err).WithField(logfields.Veth, veth.Name).Warn("failed to clean up and delete veth")
+				}
+			}
+		}()
 
-	if err = netlink.LinkSetNsFd(*peer, int(netNs.Fd())); err != nil {
-		return fmt.Errorf("unable to move veth pair '%v' to netns: %s", peer, err)
-	}
+		if err = netlink.LinkSetNsFd(*peer, int(netNs.Fd())); err != nil {
+			return fmt.Errorf("unable to move veth pair '%v' to netns: %s", peer, err)
+		}
 
-	_, _, err = connector.SetupVethRemoteNs(netNs, tmpIfName, args.IfName)
-	if err != nil {
-		return err
+		_, _, err = connector.SetupVethRemoteNs(netNs, tmpIfName, args.IfName)
+		if err != nil {
+			return err
+		}
 	}
 
 	//XXX/START
@@ -415,7 +418,7 @@ func cmdAdd(args *skel.CmdArgs) error {
 		return fmt.Errorf("unable to move ipvlan slave '%v' to netns: %s", link, err)
 	}
 
-	mapFD, mapID, err := connector.SetupIpvlanRemoteNs(netNs, tmpIfName, "ipvl0" /*args.IfName*/)
+	mapFD, mapID, err := connector.SetupIpvlanRemoteNs(netNs, tmpIfName, args.IfName)
 	if err != nil {
 		return err
 	}
