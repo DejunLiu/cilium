@@ -419,6 +419,10 @@ func equalV1Services(o1, o2 interface{}) bool {
 		return false
 	}
 
+	if !reflect.DeepEqual(svc1.GetAnnotations(), svc2.GetAnnotations()) {
+		return false
+	}
+
 	clusterIP := net.ParseIP(svc1.Spec.ClusterIP)
 	headless := false
 	if strings.ToLower(svc1.Spec.ClusterIP) == "none" {
